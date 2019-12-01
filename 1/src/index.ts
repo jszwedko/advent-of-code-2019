@@ -1,5 +1,9 @@
 import * as fs from "fs";
 import * as readline from "readline";
+import { Readable } from "stream";
+import { map } from "axax/esnext/map";
+import { reduce } from "axax/esnext/reduce";
+import { pipe } from "axax/esnext/pipe";
 
 type FuelCalculator = (fuel: number) => number;
 
@@ -31,11 +35,13 @@ function readInputStream(filename: string) {
 }
 
 async function execute(rl: AsyncStrings, fuelFn: FuelCalculator) {
-  let sum = 0;
-  for await (const line of rl) {
-    sum += fuelFn(parseInt(line));
-  }
-  return sum;
+  const sum = reduce(
+    (accumulator: number, next: number) => accumulator + next,
+    0
+  );
+  const mapFuel = map((value: string) => fuelFn(parseInt(value)));
+
+  return pipe(mapFuel, sum)(rl);
 }
 
 async function main() {
